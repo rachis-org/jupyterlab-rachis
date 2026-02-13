@@ -12,7 +12,7 @@ const MIME_TYPE = 'application/vnd.rachis.archive+zip';
  */
 const CLASS_NAME = 'mimerenderer-rachis-archive';
 
-const HOST = 'http://localhost:5173'
+const HOST = 'https://embed.q2view.pages.dev'
 
 
 function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
