@@ -1,0 +1,19 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.5.2
+_src_path: https://github.com/jupyterlab/extension-template
+author_email: developers@qiime2.org
+author_name: Rachis Development Team
+data_format: string
+file_extension: .qza,.qzv
+has_ai_rules: false
+has_binder: true
+kind: mimerenderer
+labextension_name: jupyterlab-rachis
+mimetype: application/vnd.rachis.archive+zip
+mimetype_name: Rachis Result (.qza/.qzv)
+project_short_description: A JupyterLab MIME Renderer for Rachis Results
+python_name: jupyterlab_rachis
+repository: https://github.com/rachis-org/jupyterlab-rachis
+test: true
+viewer_name: Rachis Results Viewer (.qza/.qvz)
+
