@@ -7,7 +7,7 @@ test('should display rachis-archive data file', async ({ page }) => {
   await page
     .getByRole('textbox', { name: 'URL' })
     .fill(
-      'https://raw.githubusercontent.com/qiime2/q2-fmt/master/demo/raincloud-baseline0.qzv'
+      'https://zenodo.org/api/records/13887457/files/sample-metadata.qzv/content'
     );
   await page.getByRole('button', { name: 'Open' }).click();
 
