@@ -5,9 +5,9 @@
 */
 
 .mimerenderer-rachis-archive {
-    overflow: auto
+  overflow: auto;
 }
 
 .mimerenderer-rachis-archive.jp-OutputArea-output {
-    min-height: 600px;
+  min-height: 600px;
 }

@@ -12,8 +12,7 @@ const MIME_TYPE = 'application/vnd.rachis.archive+zip';
  */
 const CLASS_NAME = 'mimerenderer-rachis-archive';
 
-const HOST = 'https://embed.q2view.pages.dev'
-
+const HOST = 'https://embed.q2view.pages.dev';
 
 function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
   /**
@@ -39,32 +38,44 @@ function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
    *     |  <--- channel(y) ---> |
    */
   const controller = new AbortController();
-  const id = Math.random().toString(16).slice(2)
-  return new Promise<MessagePort>(
-    (resolve, reject) => {
-      iframe.addEventListener('load', () => {
-
+  const id = Math.random().toString(16).slice(2);
+  return new Promise<MessagePort>((resolve, reject) => {
+    iframe.addEventListener(
+      'load',
+      () => {
         let counter = 0;
         let connected = false;
         const handle = window.setInterval(() => {
-          if (connected) { return };
+          if (connected) {
+            return;
+          }
 
-          const channel = new MessageChannel()
-          const session = Math.random().toString(16).slice(2)
-          channel.port1.addEventListener('message', (msg: MessageEvent) => {
-            connected = true;
-            window.clearInterval(handle)
+          const channel = new MessageChannel();
+          const session = Math.random().toString(16).slice(2);
+          channel.port1.addEventListener(
+            'message',
+            (msg: MessageEvent) => {
+              connected = true;
+              window.clearInterval(handle);
 
-            if (msg.data.event == 'SESSION_ACCEPT') {
-              channel.port1.postMessage({event: 'SESSION_CONFIRM', id, session})
-            } else if (msg.data.event == 'SESSION_READY') {
-              console.debug(`[${id}: parent / ${session}] Connection ready.`)
-              controller.abort();
-              resolve(channel.port1);
-            } else {
-              reject(`[${id}: parent] Connected to iframe, but ${HOST} did not accept.`)
-            }
-          }, {signal: controller.signal})
+              if (msg.data.event === 'SESSION_ACCEPT') {
+                channel.port1.postMessage({
+                  event: 'SESSION_CONFIRM',
+                  id,
+                  session
+                });
+              } else if (msg.data.event === 'SESSION_READY') {
+                console.debug(`[${id}: parent / ${session}] Connection ready.`);
+                controller.abort();
+                resolve(channel.port1);
+              } else {
+                reject(
+                  `[${id}: parent] Connected to iframe, but ${HOST} did not accept.`
+                );
+              }
+            },
+            { signal: controller.signal }
+          );
 
           channel.port1.start();
 
@@ -72,19 +83,28 @@ function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
           if (counter > 200) {
             window.clearInterval(handle);
             controller.abort();
-            reject(`[${id}: parent] Could not connect to iframe, ${HOST} did not respond.`)
+            reject(
+              `[${id}: parent] Could not connect to iframe, ${HOST} did not respond.`
+            );
           }
-          console.debug(`[${id}: parent / ${session}] Attempting to reach ${HOST} in iframe.`)
-          iframe.contentWindow?.postMessage({
+          console.debug(
+            `[${id}: parent / ${session}] Attempting to reach ${HOST} in iframe.`
+          );
+          iframe.contentWindow?.postMessage(
+            {
               event: 'SESSION_PROPOSE',
               port: channel.port2,
-              id, session
-            }, HOST, [channel.port2])
-        }, 10)
-
-
-      }, {signal: controller.signal})
-  })
+              id,
+              session
+            },
+            HOST,
+            [channel.port2]
+          );
+        }, 10);
+      },
+      { signal: controller.signal }
+    );
+  });
 }
 
 // TODO: replace with Uint8Array.fromBase64(string) when it is widely available
@@ -107,32 +127,31 @@ function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
  *
  */
 function b64toBlob(
-    b64Data: string,
-    contentType: string = '',
-    sliceSize: number = 512
-  ): Blob {
-    const byteCharacters = atob(b64Data);
-    const byteArrays: Uint8Array<ArrayBuffer>[] = [];
+  b64Data: string,
+  contentType: string = '',
+  sliceSize: number = 512
+): Blob {
+  const byteCharacters = atob(b64Data);
+  const byteArrays: Uint8Array<ArrayBuffer>[] = [];
 
-    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-      const slice = byteCharacters.slice(offset, offset + sliceSize);
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
 
-      const byteNumbers = new Array(slice.length);
-      for (let i = 0; i < slice.length; i++) {
-        byteNumbers[i] = slice.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      byteArrays.push(byteArray);
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
     }
-
-    return new Blob(byteArrays, { type: contentType });
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
   }
+
+  return new Blob(byteArrays, { type: contentType });
+}
 
 /**
  * A widget for rendering rachis-archive.
  */
 export class OutputWidget extends Widget implements IRenderMime.IRenderer {
-
   private _outbound: Promise<MessagePort>;
   private _sent = false;
 
@@ -152,50 +171,55 @@ export class OutputWidget extends Widget implements IRenderMime.IRenderer {
     this.node.appendChild(iframe);
 
     this._outbound = createMessageChannel(iframe);
-    this._outbound.then((port) => {
-      port.addEventListener('message', (msg) => {
-        this.onInnerMessage(msg)
-      })
-    })
+    this._outbound.then(port => {
+      port.addEventListener('message', msg => {
+        this.onInnerMessage(msg);
+      });
+    });
   }
 
   private onInnerMessage(msg: MessageEvent<any>) {
     const handlers = {
       inner_size: (msg: any) => {
-        console.log('inner_size', msg.height)
-        this.node.style.height = `${msg.height + 50}px`;
+        if (this.node.classList.contains('jp-OutputArea-output')) {
+          this.node.style.height = `${msg.height + 50}px`;
+        }
       }
-
-    }
-    handlers[msg.data.event as keyof typeof handlers](msg.data)
+    };
+    handlers[msg.data.event as keyof typeof handlers](msg.data);
   }
 
-  private sendInnerMessage(message: any, transfers: Transferable[] | undefined = undefined) {
-    return this._outbound.then((port) => {
+  protected onResize(msg: Widget.ResizeMessage): void {
+    this.node.style.minHeight = `${msg.height}px`;
+  }
+
+  private sendInnerMessage(
+    message: any,
+    transfers: Transferable[] | undefined = undefined
+  ) {
+    return this._outbound.then(port => {
       if (transfers) {
-        port.postMessage(message, transfers)
+        port.postMessage(message, transfers);
       } else {
-        port.postMessage(message)
+        port.postMessage(message);
       }
-    })
+    });
   }
-
 
   /**
    * Render rachis-archive into this widget's node.
    */
   renderModel(model: IRenderMime.IMimeModel): Promise<void> {
     if (this._sent) {
-      return Promise.resolve()
+      return Promise.resolve();
     }
 
-    const blob = b64toBlob(model.data[MIME_TYPE] as string)
+    const blob = b64toBlob(model.data[MIME_TYPE] as string);
 
-    return this.sendInnerMessage({event: 'BLOB_ARCHIVE', blob})
-      .then(() => {
-        this._sent = true;
-        return Promise.resolve()
-      })
+    return this.sendInnerMessage({ event: 'BLOB_ARCHIVE', blob }).then(() => {
+      this._sent = true;
+      return Promise.resolve();
+    });
   }
 }
 

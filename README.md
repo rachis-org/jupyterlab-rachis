@@ -3,7 +3,6 @@
 [![Github Actions Status](https://github.com/rachis-org/jupyterlab-rachis/workflows/Build/badge.svg)](https://github.com/rachis-org/jupyterlab-rachis/actions/workflows/build.yml)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rachis-org/jupyterlab-rachis/main?urlpath=lab)
 
-
 A JupyterLab MIME Renderer for Rachis Results
 
 ## Requirements
