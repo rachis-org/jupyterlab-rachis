@@ -1,7 +1,7 @@
 import { expect, test } from '@jupyterlab/galata';
 
-test('should display Rachis Result (.qza/.qzv) data file', async ({ page }) => {
-  const filename = 'test.qza,.qzv';
+test('should display rachis-archive data file', async ({ page }) => {
+  const filename = 'test.qzv';
   await page.menu.clickMenuItem('File>New>Text File');
 
   // Set MIME type content in fill
@@ -19,12 +19,12 @@ test('should display Rachis Result (.qza/.qzv) data file', async ({ page }) => {
 
   await page.filebrowser.open(filename);
 
-  const view = page.getByRole('main').locator('.mimerenderer-Rachis Result (.qza/.qzv)');
+  const view = page.getByRole('main').locator('.mimerenderer-rachis-archive');
 
-  expect(await view.screenshot()).toMatchSnapshot('Rachis Result (.qza/.qzv)-file.png');
+  expect(await view.screenshot()).toMatchSnapshot('rachis-archive-file.png');
 });
 
-test('should display notebook Rachis Result (.qza/.qzv) output', async ({ page }) => {
+test('should display notebook rachis-archive output', async ({ page }) => {
   await page.menu.clickMenuItem('File>New>Notebook');
 
   await page.getByRole('button', { name: 'Select' }).click();
@@ -45,7 +45,7 @@ display(output, raw=True)`
 
   const outputs = page
     .getByRole('main')
-    .locator('.mimerenderer-Rachis Result (.qza/.qzv).jp-OutputArea-output');
+    .locator('.mimerenderer-rachis-archive.jp-OutputArea-output');
 
   await expect(outputs).toHaveCount(1);
 });

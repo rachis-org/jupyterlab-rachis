@@ -7,9 +7,9 @@ node_modules/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
-jupyterlab_rachis/labextension
+jupyterlab-rachis/labextension
 # Version file is handled by hatchling
-jupyterlab_rachis/_version.py
+jupyterlab-rachis/_version.py
 
 # Integration tests
 ui-tests/test-results/

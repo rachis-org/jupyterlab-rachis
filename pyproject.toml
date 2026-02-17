@@ -3,7 +3,7 @@ requires = ["hatchling>=1.5.0", "jupyterlab>=4.0.0,<5", "hatch-nodejs-version>=0
 build-backend = "hatchling.build"
 
 [project]
-name = "jupyterlab_rachis"
+name = "jupyterlab-rachis"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
@@ -34,24 +34,24 @@ source = "nodejs"
 fields = ["description", "authors", "urls", "keywords"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["jupyterlab_rachis/labextension"]
+artifacts = ["jupyterlab-rachis/labextension"]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel.shared-data]
-"jupyterlab_rachis/labextension" = "share/jupyter/labextensions/jupyterlab-rachis"
+"jupyterlab-rachis/labextension" = "share/jupyter/labextensions/jupyterlab-rachis"
 "install.json" = "share/jupyter/labextensions/jupyterlab-rachis/install.json"
 
 [tool.hatch.build.hooks.version]
-path = "jupyterlab_rachis/_version.py"
+path = "jupyterlab-rachis/_version.py"
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
-    "jupyterlab_rachis/labextension/static/style.js",
-    "jupyterlab_rachis/labextension/package.json",
+    "jupyterlab-rachis/labextension/static/style.js",
+    "jupyterlab-rachis/labextension/package.json",
 ]
-skip-if-exists = ["jupyterlab_rachis/labextension/static/style.js"]
+skip-if-exists = ["jupyterlab-rachis/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
@@ -61,7 +61,7 @@ npm = ["jlpm"]
 build_cmd = "install:extension"
 npm = ["jlpm"]
 source_dir = "src"
-build_dir = "jupyterlab_rachis/labextension"
+build_dir = "jupyterlab-rachis/labextension"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatch version"

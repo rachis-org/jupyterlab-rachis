@@ -129,7 +129,7 @@ function b64toBlob(
   }
 
 /**
- * A widget for rendering Rachis Result (.qza/.qzv).
+ * A widget for rendering rachis-archive.
  */
 export class OutputWidget extends Widget implements IRenderMime.IRenderer {
 
@@ -182,7 +182,7 @@ export class OutputWidget extends Widget implements IRenderMime.IRenderer {
 
 
   /**
-   * Render Rachis Result (.qza/.qzv) into this widget's node.
+   * Render rachis-archive into this widget's node.
    */
   renderModel(model: IRenderMime.IMimeModel): Promise<void> {
     if (this._sent) {
@@ -200,7 +200,7 @@ export class OutputWidget extends Widget implements IRenderMime.IRenderer {
 }
 
 /**
- * A mime renderer factory for Rachis Result (.qza/.qzv) data.
+ * A mime renderer factory for rachis-archive data.
  */
 export const rendererFactory: IRenderMime.IRendererFactory = {
   safe: true,
@@ -213,24 +213,24 @@ export const rendererFactory: IRenderMime.IRendererFactory = {
  */
 const extension: IRenderMime.IExtension = {
   id: 'jupyterlab-rachis:plugin',
-  // description: 'Adds MIME type renderer for Rachis Result (.qza/.qzv) content',
+  // description: 'Adds MIME type renderer for rachis-archive content',
   rendererFactory,
   rank: 100,
   dataType: 'string',
   fileTypes: [
     {
-      name: 'Rachis Result (.qza/.qzv)',
+      name: 'rachis-archive',
       mimeTypes: [MIME_TYPE],
-      extensions: ['.qza','.qzv'],
+      extensions: ['.qzv'],
       fileFormat: 'base64' // important magic in JupyterLab
     }
   ],
   documentWidgetFactoryOptions: {
-    name: 'Rachis Results Viewer (.qza/.qvz)',
+    name: 'Rachis Results Viewer (.qvz)',
     modelName: 'base64', // important magic in JupyterLab
-    primaryFileType: 'Rachis Result (.qza/.qzv)',
-    fileTypes: ['Rachis Result (.qza/.qzv)'],
-    defaultFor: ['Rachis Result (.qza/.qzv)']
+    primaryFileType: 'rachis-archive',
+    fileTypes: ['rachis-archive'],
+    defaultFor: ['rachis-archive']
   }
 };
 

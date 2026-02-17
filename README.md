@@ -1,4 +1,4 @@
-# jupyterlab_rachis
+# jupyterlab-rachis
 
 [![Github Actions Status](https://github.com/rachis-org/jupyterlab-rachis/workflows/Build/badge.svg)](https://github.com/rachis-org/jupyterlab-rachis/actions/workflows/build.yml)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rachis-org/jupyterlab-rachis/main?urlpath=lab)
@@ -15,7 +15,7 @@ A JupyterLab MIME Renderer for Rachis Results
 To install the extension, execute:
 
 ```bash
-pip install jupyterlab_rachis
+pip install jupyterlab-rachis
 ```
 
 ## Uninstall
@@ -23,7 +23,7 @@ pip install jupyterlab_rachis
 To remove the extension, execute:
 
 ```bash
-pip uninstall jupyterlab_rachis
+pip uninstall jupyterlab-rachis
 ```
 
 ## Contributing
@@ -38,7 +38,7 @@ The `jlpm` command is JupyterLab's pinned version of
 
 ```bash
 # Clone the repo to your local environment
-# Change directory to the jupyterlab_rachis directory
+# Change directory to the jupyterlab-rachis directory
 
 # Set up a virtual environment and install package in development mode
 python -m venv .venv
@@ -74,7 +74,7 @@ jupyter lab build --minimize=False
 ### Development uninstall
 
 ```bash
-pip uninstall jupyterlab_rachis
+pip uninstall jupyterlab-rachis
 ```
 
 In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
