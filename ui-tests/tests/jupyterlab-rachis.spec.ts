@@ -7,7 +7,7 @@ test('should display rachis-archive data file', async ({ page }) => {
   await page
     .getByRole('textbox', { name: 'URL' })
     .fill(
-      'https://zenodo.org/api/records/13887457/files/sample-metadata.qzv/content'
+      'https://zenodo.org/api/records/13887457/files/sample-metadata.qzv/content?ext=.qzv'
     );
   await page.getByRole('button', { name: 'Open' }).click();
 
