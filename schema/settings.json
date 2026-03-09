@@ -1,0 +1,20 @@
+{
+  "title": "Rachis Viewer Settings",
+  "description": "Settings for the Rachis MIME renderer.",
+  "type": "object",
+  "properties": {
+    "iframeOrigin": {
+      "title": "Iframe Origin",
+      "description": "Origin to use for the embedded Rachis viewer iframe, for example https://embed.q2view.pages.dev.",
+      "type": "string",
+      "default": "https://embed.q2view.pages.dev"
+    },
+    "iframePath": {
+      "title": "Iframe Path",
+      "description": "Path to use for the embedded Rachis viewer iframe, for example /embed/.",
+      "type": "string",
+      "default": "/embed/"
+    }
+  },
+  "additionalProperties": false
+}

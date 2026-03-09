@@ -1,6 +1,7 @@
 import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
 
 import { Widget } from '@lumino/widgets';
+import { getIframeOrigin, getIframePath } from './host';
 
 /**
  * The default mime type for the extension.
@@ -12,9 +13,10 @@ const MIME_TYPE = 'application/vnd.rachis.archive+zip';
  */
 const CLASS_NAME = 'mimerenderer-rachis-archive';
 
-const HOST = 'https://embed.q2view.pages.dev';
-
-function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
+function createMessageChannel(
+  iframe: HTMLIFrameElement,
+  host: string
+): Promise<MessagePort> {
   /**
    * Perform a 4-way handshake to create a secure 1-sided channel, where only the
    * inner iframe needs an onMessage handler. 4-way handshake is needed because
@@ -70,7 +72,7 @@ function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
                 resolve(channel.port1);
               } else {
                 reject(
-                  `[${id}: parent] Connected to iframe, but ${HOST} did not accept.`
+                  `[${id}: parent] Connected to iframe, but ${host} did not accept.`
                 );
               }
             },
@@ -84,11 +86,11 @@ function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
             window.clearInterval(handle);
             controller.abort();
             reject(
-              `[${id}: parent] Could not connect to iframe, ${HOST} did not respond.`
+              `[${id}: parent] Could not connect to iframe, ${host} did not respond.`
             );
           }
           console.debug(
-            `[${id}: parent / ${session}] Attempting to reach ${HOST} in iframe.`
+            `[${id}: parent / ${session}] Attempting to reach ${host} in iframe.`
           );
           iframe.contentWindow?.postMessage(
             {
@@ -97,7 +99,7 @@ function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
               id,
               session
             },
-            HOST,
+            host,
             [channel.port2]
           );
         }, 10);
@@ -162,15 +164,17 @@ export class OutputWidget extends Widget implements IRenderMime.IRenderer {
     super();
     this.addClass(CLASS_NAME);
 
+    const host = getIframeOrigin();
+    const path = getIframePath();
     const iframe = document.createElement('iframe');
-    iframe.src = `${HOST}/embed/`;
+    iframe.src = `${host}${path}`;
     iframe.style.border = '0';
     iframe.style.width = '100%';
     iframe.style.height = '100%';
     iframe.style.position = 'absolute';
     this.node.appendChild(iframe);
 
-    this._outbound = createMessageChannel(iframe);
+    this._outbound = createMessageChannel(iframe, host);
     this._outbound.then(port => {
       port.addEventListener('message', msg => {
         this.onInnerMessage(msg);
