@@ -1,12 +1,30 @@
+import {
+  JupyterFrontEnd,
+  JupyterFrontEndPlugin
+} from '@jupyterlab/application';
+import { MimeDocumentFactory } from '@jupyterlab/docregistry';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
-
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { ITranslator } from '@jupyterlab/translation';
 import { Widget } from '@lumino/widgets';
-import { getIframeOrigin, getIframePath } from './host';
+import {
+  IFRAME_ORIGIN_SETTING,
+  IFRAME_PATH_SETTING,
+  getIframeOrigin,
+  getIframePath,
+  setIframeOrigin,
+  setIframePath
+} from './host';
 
 /**
  * The default mime type for the extension.
  */
 const MIME_TYPE = 'application/vnd.rachis.archive+zip';
+const RENDERER_PLUGIN_ID = 'jupyterlab-rachis:plugin';
+const SETTINGS_PLUGIN_ID = 'jupyterlab-rachis:settings';
+const FILE_TYPE_NAME = 'rachis-archive';
+const DOCUMENT_FACTORY_NAME = 'Rachis Results Viewer (.qvz)';
 
 /**
  * The class name added to the extension.
@@ -239,27 +257,66 @@ export const rendererFactory: IRenderMime.IRendererFactory = {
 /**
  * Extension definition.
  */
-const extension: IRenderMime.IExtension = {
-  id: 'jupyterlab-rachis:plugin',
-  // description: 'Adds MIME type renderer for rachis-archive content',
-  rendererFactory,
-  rank: 100,
-  dataType: 'string',
-  fileTypes: [
-    {
-      name: 'rachis-archive',
-      mimeTypes: [MIME_TYPE],
-      extensions: ['.qzv'],
-      fileFormat: 'base64' // important magic in JupyterLab
+const extension: JupyterFrontEndPlugin<void> = {
+  id: RENDERER_PLUGIN_ID,
+  autoStart: true,
+  requires: [IRenderMimeRegistry, ITranslator, ISettingRegistry],
+  activate: async (
+    app: JupyterFrontEnd,
+    rendermime: IRenderMimeRegistry,
+    translator: ITranslator,
+    settingRegistry: ISettingRegistry
+  ) => {
+    await loadSettings(settingRegistry);
+
+    rendermime.addFactory(rendererFactory, 100);
+
+    if (!app.docRegistry.getFileType(FILE_TYPE_NAME)) {
+      app.docRegistry.addFileType({
+        name: FILE_TYPE_NAME,
+        mimeTypes: [MIME_TYPE],
+        extensions: ['.qzv'],
+        fileFormat: 'base64' // important magic in JupyterLab
+      });
     }
-  ],
-  documentWidgetFactoryOptions: {
-    name: 'Rachis Results Viewer (.qvz)',
-    modelName: 'base64', // important magic in JupyterLab
-    primaryFileType: 'rachis-archive',
-    fileTypes: ['rachis-archive'],
-    defaultFor: ['rachis-archive']
+
+    if (app.docRegistry.getWidgetFactory(DOCUMENT_FACTORY_NAME)) {
+      return;
+    }
+
+    const factory = new MimeDocumentFactory({
+      dataType: 'string',
+      rendermime,
+      modelName: 'base64', // important magic in JupyterLab
+      name: DOCUMENT_FACTORY_NAME,
+      primaryFileType: app.docRegistry.getFileType(FILE_TYPE_NAME),
+      fileTypes: [FILE_TYPE_NAME],
+      defaultFor: [FILE_TYPE_NAME],
+      translator,
+      factory: rendererFactory
+    });
+
+    app.docRegistry.addWidgetFactory(factory);
   }
 };
 
 export default extension;
+
+async function loadSettings(settingRegistry: ISettingRegistry): Promise<void> {
+  try {
+    const settings = await settingRegistry.load(SETTINGS_PLUGIN_ID);
+    updateIframeSettings(settings);
+    settings.changed.connect(updated => {
+      updateIframeSettings(updated);
+    });
+  } catch (error) {
+    console.error('[jupyterlab-rachis] Failed to load settings.', error);
+    setIframeOrigin(undefined);
+    setIframePath(undefined);
+  }
+}
+
+function updateIframeSettings(settings: ISettingRegistry.ISettings): void {
+  setIframeOrigin(settings.get(IFRAME_ORIGIN_SETTING).composite);
+  setIframePath(settings.get(IFRAME_PATH_SETTING).composite);
+}

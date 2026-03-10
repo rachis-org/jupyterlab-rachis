@@ -99,8 +99,7 @@
         "access": "public"
     },
     "jupyterlab": {
-        "extension": "lib/settings.js",
-        "mimeExtension": "lib/index.js",
+        "extension": "lib/index.js",
         "schemaDir": "schema",
         "outputDir": "jupyterlab_rachis/labextension"
     },
