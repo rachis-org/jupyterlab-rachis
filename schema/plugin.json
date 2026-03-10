@@ -7,12 +7,16 @@
       "title": "iframe origin",
       "description": "Origin to use for the embedded Rachis viewer iframe (should include protocol): https://example.com ",
       "type": "string",
+      "minLength": 1,
+      "pattern": "^https?://",
       "default": "https://view.rachis.org"
     },
     "iframePath": {
       "title": "iframe path",
-      "description": "Path to use for the embedded Rachis viewer iframe, for example /embed/.",
+      "description": "Path to use for the embedded Rachis viewer iframe, for example `/` or `/embed/`.",
       "type": "string",
+      "minLength": 1,
+      "pattern": "^/",
       "default": "/embed/"
     }
   },

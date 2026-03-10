@@ -8,28 +8,43 @@ import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { ITranslator } from '@jupyterlab/translation';
 import { Widget } from '@lumino/widgets';
-import {
-  IFRAME_ORIGIN_SETTING,
-  IFRAME_PATH_SETTING,
-  getIframeOrigin,
-  getIframePath,
-  setIframeOrigin,
-  setIframePath
-} from './host';
 
 /**
  * The default mime type for the extension.
  */
 const MIME_TYPE = 'application/vnd.rachis.archive+zip';
-const RENDERER_PLUGIN_ID = 'jupyterlab-rachis:plugin';
-const SETTINGS_PLUGIN_ID = 'jupyterlab-rachis:settings';
+const PLUGIN_ID = 'jupyterlab-rachis:plugin';
 const FILE_TYPE_NAME = 'rachis-archive';
 const DOCUMENT_FACTORY_NAME = 'Rachis Results Viewer (.qvz)';
+const IFRAME_ORIGIN_SETTING = 'iframeOrigin';
+const IFRAME_PATH_SETTING = 'iframePath';
+
+const iframeConfig = {
+  origin: '',
+  path: ''
+};
 
 /**
  * The class name added to the extension.
  */
 const CLASS_NAME = 'mimerenderer-rachis-archive';
+
+function configureIframe(origin: string, path: string): void {
+  const parsed = new URL(origin.trim());
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(
+      `[jupyterlab-rachis] iframeOrigin must use http:// or https://, got '${origin}'.`
+    );
+  }
+  const trimmed = path.trim();
+  if (!trimmed.startsWith('/')) {
+    throw new Error(
+      `[jupyterlab-rachis] iframePath must begin with '/', got '${path}'.`
+    );
+  }
+  iframeConfig.origin = parsed.origin;
+  iframeConfig.path = trimmed;
+}
 
 function createMessageChannel(
   iframe: HTMLIFrameElement,
@@ -178,14 +193,14 @@ export class OutputWidget extends Widget implements IRenderMime.IRenderer {
   /**
    * Construct a new output widget.
    */
-  constructor(options: IRenderMime.IRendererOptions) {
+  constructor() {
     super();
     this.addClass(CLASS_NAME);
 
-    const host = getIframeOrigin();
-    const path = getIframePath();
+    const host = iframeConfig.origin;
+    const path = iframeConfig.path;
     const iframe = document.createElement('iframe');
-    iframe.src = `${host}${path}`;
+    iframe.src = new URL(path, host).toString();
     iframe.style.border = '0';
     iframe.style.width = '100%';
     iframe.style.height = '100%';
@@ -248,17 +263,17 @@ export class OutputWidget extends Widget implements IRenderMime.IRenderer {
 /**
  * A mime renderer factory for rachis-archive data.
  */
-export const rendererFactory: IRenderMime.IRendererFactory = {
+const rendererFactory: IRenderMime.IRendererFactory = {
   safe: true,
   mimeTypes: [MIME_TYPE],
-  createRenderer: options => new OutputWidget(options)
+  createRenderer: () => new OutputWidget()
 };
 
 /**
  * Extension definition.
  */
 const extension: JupyterFrontEndPlugin<void> = {
-  id: RENDERER_PLUGIN_ID,
+  id: PLUGIN_ID,
   autoStart: true,
   requires: [IRenderMimeRegistry, ITranslator, ISettingRegistry],
   activate: async (
@@ -267,7 +282,17 @@ const extension: JupyterFrontEndPlugin<void> = {
     translator: ITranslator,
     settingRegistry: ISettingRegistry
   ) => {
-    await loadSettings(settingRegistry);
+    const settings = await settingRegistry.load(PLUGIN_ID);
+    configureIframe(
+      settings.get(IFRAME_ORIGIN_SETTING).composite as string,
+      settings.get(IFRAME_PATH_SETTING).composite as string
+    );
+    settings.changed.connect(updated => {
+      configureIframe(
+        updated.get(IFRAME_ORIGIN_SETTING).composite as string,
+        updated.get(IFRAME_PATH_SETTING).composite as string
+      );
+    });
 
     rendermime.addFactory(rendererFactory, 100);
 
@@ -301,22 +326,3 @@ const extension: JupyterFrontEndPlugin<void> = {
 };
 
 export default extension;
-
-async function loadSettings(settingRegistry: ISettingRegistry): Promise<void> {
-  try {
-    const settings = await settingRegistry.load(SETTINGS_PLUGIN_ID);
-    updateIframeSettings(settings);
-    settings.changed.connect(updated => {
-      updateIframeSettings(updated);
-    });
-  } catch (error) {
-    console.error('[jupyterlab-rachis] Failed to load settings.', error);
-    setIframeOrigin(undefined);
-    setIframePath(undefined);
-  }
-}
-
-function updateIframeSettings(settings: ISettingRegistry.ISettings): void {
-  setIframeOrigin(settings.get(IFRAME_ORIGIN_SETTING).composite);
-  setIframePath(settings.get(IFRAME_PATH_SETTING).composite);
-}
