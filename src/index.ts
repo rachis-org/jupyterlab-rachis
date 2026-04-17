@@ -250,7 +250,7 @@ const extension: IRenderMime.IExtension = {
     }
   ],
   documentWidgetFactoryOptions: {
-    name: 'Rachis Results Viewer (.qvz)',
+    name: 'Rachis Results Viewer (.qzv)',
     modelName: 'base64', // important magic in JupyterLab
     primaryFileType: 'rachis-archive',
     fileTypes: ['rachis-archive'],
