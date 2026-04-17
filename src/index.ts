@@ -1,20 +1,55 @@
+import {
+  JupyterFrontEnd,
+  JupyterFrontEndPlugin
+} from '@jupyterlab/application';
+import { MimeDocumentFactory } from '@jupyterlab/docregistry';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
-
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { ITranslator } from '@jupyterlab/translation';
 import { Widget } from '@lumino/widgets';
 
 /**
  * The default mime type for the extension.
  */
 const MIME_TYPE = 'application/vnd.rachis.archive+zip';
+const PLUGIN_ID = 'jupyterlab-rachis:plugin';
+const FILE_TYPE_NAME = 'rachis-archive';
+const DOCUMENT_FACTORY_NAME = 'Rachis Results Viewer (.qzv)';
+const IFRAME_ORIGIN_SETTING = 'iframeOrigin';
+const IFRAME_PATH_SETTING = 'iframePath';
+
+const iframeConfig = {
+  origin: '',
+  path: ''
+};
 
 /**
  * The class name added to the extension.
  */
 const CLASS_NAME = 'mimerenderer-rachis-archive';
 
-const HOST = 'https://embed.q2view.pages.dev';
+function configureIframe(origin: string, path: string): void {
+  const parsed = new URL(origin.trim());
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(
+      `[jupyterlab-rachis] iframeOrigin must use http:// or https://, got '${origin}'.`
+    );
+  }
+  const trimmed = path.trim();
+  if (!trimmed.startsWith('/')) {
+    throw new Error(
+      `[jupyterlab-rachis] iframePath must begin with '/', got '${path}'.`
+    );
+  }
+  iframeConfig.origin = parsed.origin;
+  iframeConfig.path = trimmed;
+}
 
-function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
+function createMessageChannel(
+  iframe: HTMLIFrameElement,
+  host: string
+): Promise<MessagePort> {
   /**
    * Perform a 4-way handshake to create a secure 1-sided channel, where only the
    * inner iframe needs an onMessage handler. 4-way handshake is needed because
@@ -70,7 +105,7 @@ function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
                 resolve(channel.port1);
               } else {
                 reject(
-                  `[${id}: parent] Connected to iframe, but ${HOST} did not accept.`
+                  `[${id}: parent] Connected to iframe, but ${host} did not accept.`
                 );
               }
             },
@@ -84,11 +119,11 @@ function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
             window.clearInterval(handle);
             controller.abort();
             reject(
-              `[${id}: parent] Could not connect to iframe, ${HOST} did not respond.`
+              `[${id}: parent] Could not connect to iframe, ${host} did not respond.`
             );
           }
           console.debug(
-            `[${id}: parent / ${session}] Attempting to reach ${HOST} in iframe.`
+            `[${id}: parent / ${session}] Attempting to reach ${host} in iframe.`
           );
           iframe.contentWindow?.postMessage(
             {
@@ -97,7 +132,7 @@ function createMessageChannel(iframe: HTMLIFrameElement): Promise<MessagePort> {
               id,
               session
             },
-            HOST,
+            host,
             [channel.port2]
           );
         }, 10);
@@ -158,19 +193,21 @@ export class OutputWidget extends Widget implements IRenderMime.IRenderer {
   /**
    * Construct a new output widget.
    */
-  constructor(options: IRenderMime.IRendererOptions) {
+  constructor() {
     super();
     this.addClass(CLASS_NAME);
 
+    const host = iframeConfig.origin;
+    const path = iframeConfig.path;
     const iframe = document.createElement('iframe');
-    iframe.src = `${HOST}/embed/`;
+    iframe.src = new URL(path, host).toString();
     iframe.style.border = '0';
     iframe.style.width = '100%';
     iframe.style.height = '100%';
     iframe.style.position = 'absolute';
     this.node.appendChild(iframe);
 
-    this._outbound = createMessageChannel(iframe);
+    this._outbound = createMessageChannel(iframe, host);
     this._outbound.then(port => {
       port.addEventListener('message', msg => {
         this.onInnerMessage(msg);
@@ -226,35 +263,65 @@ export class OutputWidget extends Widget implements IRenderMime.IRenderer {
 /**
  * A mime renderer factory for rachis-archive data.
  */
-export const rendererFactory: IRenderMime.IRendererFactory = {
+const rendererFactory: IRenderMime.IRendererFactory = {
   safe: true,
   mimeTypes: [MIME_TYPE],
-  createRenderer: options => new OutputWidget(options)
+  createRenderer: () => new OutputWidget()
 };
 
 /**
  * Extension definition.
  */
-const extension: IRenderMime.IExtension = {
-  id: 'jupyterlab-rachis:plugin',
-  // description: 'Adds MIME type renderer for rachis-archive content',
-  rendererFactory,
-  rank: 100,
-  dataType: 'string',
-  fileTypes: [
-    {
-      name: 'rachis-archive',
-      mimeTypes: [MIME_TYPE],
-      extensions: ['.qzv'],
-      fileFormat: 'base64' // important magic in JupyterLab
+const extension: JupyterFrontEndPlugin<void> = {
+  id: PLUGIN_ID,
+  autoStart: true,
+  requires: [IRenderMimeRegistry, ITranslator, ISettingRegistry],
+  activate: async (
+    app: JupyterFrontEnd,
+    rendermime: IRenderMimeRegistry,
+    translator: ITranslator,
+    settingRegistry: ISettingRegistry
+  ) => {
+    const settings = await settingRegistry.load(PLUGIN_ID);
+    configureIframe(
+      settings.get(IFRAME_ORIGIN_SETTING).composite as string,
+      settings.get(IFRAME_PATH_SETTING).composite as string
+    );
+    settings.changed.connect(updated => {
+      configureIframe(
+        updated.get(IFRAME_ORIGIN_SETTING).composite as string,
+        updated.get(IFRAME_PATH_SETTING).composite as string
+      );
+    });
+
+    rendermime.addFactory(rendererFactory, 100);
+
+    if (!app.docRegistry.getFileType(FILE_TYPE_NAME)) {
+      app.docRegistry.addFileType({
+        name: FILE_TYPE_NAME,
+        mimeTypes: [MIME_TYPE],
+        extensions: ['.qzv'],
+        fileFormat: 'base64' // important magic in JupyterLab
+      });
     }
-  ],
-  documentWidgetFactoryOptions: {
-    name: 'Rachis Results Viewer (.qzv)',
-    modelName: 'base64', // important magic in JupyterLab
-    primaryFileType: 'rachis-archive',
-    fileTypes: ['rachis-archive'],
-    defaultFor: ['rachis-archive']
+
+    if (app.docRegistry.getWidgetFactory(DOCUMENT_FACTORY_NAME)) {
+      return;
+    }
+
+    const factory = new MimeDocumentFactory({
+      dataType: 'string',
+      rendermime,
+      modelName: 'base64', // important magic in JupyterLab
+      name: DOCUMENT_FACTORY_NAME,
+      primaryFileType: app.docRegistry.getFileType(FILE_TYPE_NAME),
+      fileTypes: [FILE_TYPE_NAME],
+      defaultFor: [FILE_TYPE_NAME],
+      translator,
+      factory: rendererFactory
+    });
+
+    app.docRegistry.addWidgetFactory(factory);
   }
 };
 
