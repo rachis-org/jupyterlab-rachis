@@ -15,7 +15,7 @@ import { Widget } from '@lumino/widgets';
 const MIME_TYPE = 'application/vnd.rachis.archive+zip';
 const PLUGIN_ID = 'jupyterlab-rachis:plugin';
 const FILE_TYPE_NAME = 'rachis-archive';
-const DOCUMENT_FACTORY_NAME = 'Rachis Results Viewer (.qvz)';
+const DOCUMENT_FACTORY_NAME = 'Rachis Results Viewer (.qzv)';
 const IFRAME_ORIGIN_SETTING = 'iframeOrigin';
 const IFRAME_PATH_SETTING = 'iframePath';
 
