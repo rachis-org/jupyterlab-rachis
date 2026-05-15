@@ -1,6 +1,6 @@
 {
     "name": "jupyterlab-rachis",
-    "version": "0.1.0",
+    "version": "2026.4.0",
     "description": "A JupyterLab MIME Renderer for Rachis Results",
     "keywords": [
         "jupyter",
