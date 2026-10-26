@@ -25,6 +25,20 @@ To remove the extension, execute:
 pip uninstall jupyterlab-rachis
 ```
 
+## Clearing embedded visualizations
+
+Inline visualizations can make the `.ipynb` files quite large. Sometimes, this is
+a disadvantage, such as in assignment uploads to a course platform or sharing
+notebooks over email. 
+
+With a notebook active, choose **Edit → Clear Rachis Visualizations** to remove
+embedded Rachis archives from every code cell. Outputs keep their text
+representation (such as `<visualization ...>`) and any other MIME representations.
+Other outputs and execution counts are preserved.
+
+Save the notebook again to reduce its file size. 
+Re-run a visualization's cell to embed and display it again.
+
 ## Contributing
 
 ### Development install

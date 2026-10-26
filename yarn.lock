@@ -2217,7 +2217,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/cells@npm:^4.5.4":
+"@jupyterlab/cells@npm:^4.0.0, @jupyterlab/cells@npm:^4.5.4":
   version: 4.5.4
   resolution: "@jupyterlab/cells@npm:4.5.4"
   dependencies:
@@ -2497,7 +2497,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/notebook@npm:^4.5.4":
+"@jupyterlab/notebook@npm:^4.0.0, @jupyterlab/notebook@npm:^4.5.4":
   version: 4.5.4
   resolution: "@jupyterlab/notebook@npm:4.5.4"
   dependencies:
@@ -7808,6 +7808,8 @@ __metadata:
   resolution: "jupyterlab-rachis@workspace:."
   dependencies:
     "@jupyterlab/builder": ^4.0.0
+    "@jupyterlab/cells": ^4.0.0
+    "@jupyterlab/notebook": ^4.0.0
     "@jupyterlab/rendermime-interfaces": ^3.8.0
     "@jupyterlab/testutils": ^4.0.0
     "@lumino/widgets": ^2.1.0

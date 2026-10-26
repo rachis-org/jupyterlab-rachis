@@ -2,6 +2,18 @@
   "title": "Rachis Viewer Settings",
   "description": "Settings for the Rachis MIME renderer.",
   "type": "object",
+  "jupyter.lab.menus": {
+    "main": [
+      {
+        "id": "jp-mainmenu-edit",
+        "items": [
+          {
+            "command": "jupyterlab-rachis:clear-visualizations"
+          }
+        ]
+      }
+    ]
+  },
   "properties": {
     "iframeOrigin": {
       "title": "iframe origin",
