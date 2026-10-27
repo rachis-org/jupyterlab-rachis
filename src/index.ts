@@ -4,6 +4,7 @@ import {
 } from '@jupyterlab/application';
 import { isCodeCellModel } from '@jupyterlab/cells';
 import { MimeDocumentFactory } from '@jupyterlab/docregistry';
+import { isDisplayData, isExecuteResult } from '@jupyterlab/nbformat';
 import { INotebookModel, INotebookTracker } from '@jupyterlab/notebook';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
@@ -44,16 +45,18 @@ function clearVisualizations(model: INotebookModel): void {
       }
 
       for (let j = 0; j < cell.outputs.length; j++) {
-        const output = cell.outputs.get(j);
-        const data = { ...output.data };
-        if (!(MIME_TYPE in data)) {
+        const output = cell.outputs.get(j).toJSON();
+        if (
+          !(isDisplayData(output) || isExecuteResult(output)) ||
+          !(MIME_TYPE in output.data)
+        ) {
           continue;
         }
 
-        delete data[MIME_TYPE];
-        const metadata = { ...output.metadata };
-        delete metadata[MIME_TYPE];
-        output.setData({ data, metadata });
+        delete output.data[MIME_TYPE];
+        delete output.metadata[MIME_TYPE];
+        // Replacing the item also updates the shared model in JupyterLab 4.0.
+        cell.outputs.set(j, output);
       }
     }
   });

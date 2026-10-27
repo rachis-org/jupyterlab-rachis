@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "description": "JupyterLab jupyterlab-rachis Integration Tests",
   "private": true,
+  "packageManager": "yarn@3.5.0",
   "scripts": {
     "start": "jupyter lab --config jupyter_server_test_config.py",
     "test": "jlpm playwright test",
     "test:update": "jlpm playwright test --update-snapshots"
   },
   "devDependencies": {
-    "@jupyterlab/galata": "^5.6.4",
-    "@playwright/test": "^1.60.0"
+    "@jupyterlab/galata": "~5.6.4",
+    "@playwright/test": "~1.64.1"
   }
 }

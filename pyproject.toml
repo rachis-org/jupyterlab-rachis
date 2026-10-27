@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.5.0", "jupyterlab>=4.0.0,<5", "hatch-nodejs-version>=0.3.2"]
+requires = ["hatchling>=1.5.0", "jupyter-builder>=1.2.0,<2", "hatch-nodejs-version>=0.3.2"]
 build-backend = "hatchling.build"
 
 [project]
@@ -71,8 +71,8 @@ version_cmd = "hatch version"
 
 [tool.jupyter-releaser.hooks]
 before-build-python = [
-    "python -m pip install 'jupyterlab>=4.0.0,<5'",
-    "jlpm",
+    "python -m pip install 'jupyter-builder>=1.2.0,<2'",
+    "jlpm install --immutable",
     "jlpm clean:all"
 ]
 
