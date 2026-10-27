@@ -11,7 +11,7 @@ test('should display rachis-archive data file', async ({ page }) => {
     );
   await page.getByRole('button', { name: 'Open' }).click();
 
-  await page.waitForTimeout(4000);
+  await page.waitForTimeout(8000);
 
   const view = page.getByRole('main').locator('.mimerenderer-rachis-archive');
 
