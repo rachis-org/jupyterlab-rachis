@@ -7,7 +7,7 @@ A JupyterLab MIME Renderer for Rachis Results
 
 ## Requirements
 
-- JupyterLab >= 4.0.0
+- JupyterLab >= 4.0.0, < 5
 
 ## Install
 
@@ -25,15 +25,34 @@ To remove the extension, execute:
 pip uninstall jupyterlab-rachis
 ```
 
+## Clearing embedded visualizations
+
+Inline visualizations can make the `.ipynb` files quite large. Sometimes, this is
+a disadvantage, such as in assignment uploads to a course platform or sharing
+notebooks over email.
+
+With a notebook active, choose **Edit → Clear Rachis Visualizations** to remove
+embedded Rachis archives from every code cell. Outputs keep their text
+representation (such as `<visualization ...>`) and any other MIME representations.
+Other outputs and execution counts are preserved.
+
+Save the notebook again to reduce its file size.
+Re-run a visualization's cell to embed and display it again.
+
 ## Contributing
 
 ### Development install
 
-Note: You will need NodeJS to build the extension package.
+Use Node.js 22.12 or newer to build the extension.
 
 The `jlpm` command is JupyterLab's pinned version of
-[yarn](https://yarnpkg.com/) that is installed with JupyterLab. You may use
-`yarn` or `npm` in lieu of `jlpm` below.
+[yarn](https://yarnpkg.com/) provided by `jupyter-builder`. Use `jlpm` for both
+the root project and `ui-tests`, and commit the corresponding `yarn.lock`
+after changing dependencies.
+
+Builds target JupyterLab 4.0's metadata to preserve compatibility with JupyterLab
+4.0 through 4.6. CI checks the same wheel on both versions; browser tests use
+JupyterLab 4.6.4 and matching Galata dependencies.
 
 ```bash
 # Clone the repo to your local environment
@@ -42,6 +61,7 @@ The `jlpm` command is JupyterLab's pinned version of
 # Set up a virtual environment and install package in development mode
 python -m venv .venv
 source .venv/bin/activate
+pip install "jupyter-builder>=1.2.0,<2" "jupyterlab==4.6.4"
 pip install --editable "."
 
 # Link your development version of the extension with JupyterLab

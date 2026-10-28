@@ -22,12 +22,12 @@ jobs:
       uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
     - name: Install dependencies
-      run: python -m pip install -U "jupyterlab>=4.0.0,<5"
+      run: python -m pip install "jupyterlab==4.6.4" "jupyter-builder>=1.2.0,<2"
 
     - name: Lint the extension
       run: |
         set -eux
-        jlpm
+        jlpm install --immutable
         jlpm run lint:check
 
     - name: Test the extension
@@ -38,7 +38,7 @@ jobs:
     - name: Build the extension
       run: |
         set -eux
-        python -m pip install .[test]
+        python -m pip install .
 
         jupyter labextension list
         jupyter labextension list 2>&1 | grep -ie "jupyterlab-rachis.*OK"
@@ -62,6 +62,9 @@ jobs:
   test_isolated:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jupyterlab: ['4.0.0', '4.6.4']
 
     steps:
     - name: Install Python
@@ -79,7 +82,7 @@ jobs:
         sudo rm -rf $(which node)
         sudo rm -rf $(which node)
 
-        pip install "jupyterlab>=4.0.0,<5" jupyterlab_rachis*.whl
+        pip install "jupyterlab==${{ matrix.jupyterlab }}" jupyterlab_rachis*.whl
 
 
         jupyter labextension list
@@ -109,14 +112,13 @@ jobs:
     - name: Install the extension
       run: |
         set -eux
-        python -m pip install "jupyterlab>=4.0.0,<5" jupyterlab_rachis*.whl
+        python -m pip install "jupyterlab==4.6.4" jupyterlab_rachis*.whl
 
     - name: Install dependencies
       working-directory: ui-tests
       env:
-        YARN_ENABLE_IMMUTABLE_INSTALLS: 0
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-      run: jlpm install
+      run: jlpm install --immutable
 
     - name: Set up browser cache
       uses: actions/cache@v4

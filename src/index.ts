@@ -2,7 +2,10 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
+import { isCodeCellModel } from '@jupyterlab/cells';
 import { MimeDocumentFactory } from '@jupyterlab/docregistry';
+import { isDisplayData, isExecuteResult } from '@jupyterlab/nbformat';
+import { INotebookModel, INotebookTracker } from '@jupyterlab/notebook';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
@@ -14,6 +17,7 @@ import { Widget } from '@lumino/widgets';
  */
 const MIME_TYPE = 'application/vnd.rachis.archive+zip';
 const PLUGIN_ID = 'jupyterlab-rachis:plugin';
+const CLEAR_VISUALIZATIONS_COMMAND = 'jupyterlab-rachis:clear-visualizations';
 const FILE_TYPE_NAME = 'rachis-archive';
 const DOCUMENT_FACTORY_NAME = 'Rachis Results Viewer (.qzv)';
 const IFRAME_ORIGIN_SETTING = 'iframeOrigin';
@@ -28,6 +32,35 @@ const iframeConfig = {
  * The class name added to the extension.
  */
 const CLASS_NAME = 'mimerenderer-rachis-archive';
+
+/**
+ * Remove embedded archives, preserving the other representations of each output.
+ */
+function clearVisualizations(model: INotebookModel): void {
+  model.sharedModel.transact(() => {
+    for (let i = 0; i < model.cells.length; i++) {
+      const cell = model.cells.get(i);
+      if (!isCodeCellModel(cell)) {
+        continue;
+      }
+
+      for (let j = 0; j < cell.outputs.length; j++) {
+        const output = cell.outputs.get(j).toJSON();
+        if (
+          !(isDisplayData(output) || isExecuteResult(output)) ||
+          !(MIME_TYPE in output.data)
+        ) {
+          continue;
+        }
+
+        delete output.data[MIME_TYPE];
+        delete output.metadata[MIME_TYPE];
+        // Replacing the item also updates the shared model in JupyterLab 4.0.
+        cell.outputs.set(j, output);
+      }
+    }
+  });
+}
 
 function configureIframe(origin: string, path: string): void {
   const parsed = new URL(origin.trim());
@@ -276,12 +309,40 @@ const extension: JupyterFrontEndPlugin<void> = {
   id: PLUGIN_ID,
   autoStart: true,
   requires: [IRenderMimeRegistry, ITranslator, ISettingRegistry],
+  optional: [INotebookTracker],
   activate: async (
     app: JupyterFrontEnd,
     rendermime: IRenderMimeRegistry,
     translator: ITranslator,
-    settingRegistry: ISettingRegistry
+    settingRegistry: ISettingRegistry,
+    notebooks: INotebookTracker | null
   ) => {
+    const trans = translator.load('jupyterlab-rachis');
+    const currentNotebook = () => {
+      const panel = notebooks?.currentWidget;
+      return panel &&
+        panel === app.shell.currentWidget &&
+        !panel.model?.readOnly
+        ? panel.model
+        : null;
+    };
+    app.commands.addCommand(CLEAR_VISUALIZATIONS_COMMAND, {
+      label: trans.__('Clear Rachis Visualizations'),
+      caption: trans.__(
+        'Remove embedded Rachis archives from all cells in the current notebook, keeping their other output representations'
+      ),
+      isEnabled: () => !!currentNotebook(),
+      execute: () => {
+        const model = currentNotebook();
+        if (model) {
+          clearVisualizations(model);
+        }
+      }
+    });
+    app.shell.currentChanged?.connect(() => {
+      app.commands.notifyCommandChanged(CLEAR_VISUALIZATIONS_COMMAND);
+    });
+
     const settings = await settingRegistry.load(PLUGIN_ID);
     configureIframe(
       settings.get(IFRAME_ORIGIN_SETTING).composite as string,
